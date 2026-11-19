@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Portal Sistem Informasi KUB</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --laut:#0c3b47; --laut-2:#14566a; --ombak:#e8f1f2; --kertas:#f7fafa; --garis:#d3e0e2;
+  --teks:#16282d; --redam:#587178; --pelampung:#e8a317; --putih:#fff; --w:264px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Figtree',system-ui,sans-serif;background:var(--kertas);color:var(--teks);line-height:1.6}
+a{color:inherit}
+:focus-visible{outline:3px solid var(--pelampung);outline-offset:2px}
+
+/* Sidebar */
+.side{position:fixed;inset:0 auto 0 0;width:var(--w);background:var(--laut);color:#d9e8ea;overflow-y:auto;z-index:40;padding:20px 14px 28px;transition:transform .25s}
+.brand{display:flex;align-items:center;gap:10px;padding:4px 8px 18px;border-bottom:1px solid rgba(255,255,255,.14);margin-bottom:14px}
+.brand b{display:grid;place-items:center;width:38px;height:38px;border-radius:10px;background:var(--pelampung);color:var(--laut);font-size:15px}
+.brand span{font-weight:700;color:#fff;font-size:17px;line-height:1.2}
+.brand small{display:block;font-weight:400;font-size:12px;color:#a9c4c9}
+.side h2{font-size:13px;font-weight:600;color:#8fb2b8;padding:14px 10px 6px}
+.side a{display:block;padding:9px 12px;border-radius:8px;text-decoration:none;font-size:14.5px;color:#d9e8ea}
+.side a:hover{background:rgba(255,255,255,.08)}
+.side a[aria-current="page"]{background:var(--ombak);color:var(--laut);font-weight:600;box-shadow:inset 4px 0 0 var(--pelampung)}
+.burger{display:none;position:fixed;top:10px;left:10px;z-index:50;width:44px;height:44px;border:0;border-radius:10px;background:var(--laut);color:#fff;font-size:22px;cursor:pointer}
+.scrim{display:none}
+
+/* Konten */
+main{margin-left:var(--w);padding:32px clamp(16px,4vw,48px) 64px;max-width:1180px}
+.head{margin-bottom:22px;max-width:70ch}
+.head h1{font-size:clamp(24px,3.2vw,32px);color:var(--laut);line-height:1.2;margin-bottom:6px}
+.head p{color:var(--redam)}
+.blok{margin-bottom:28px}
+.blok h3{font-size:16px;color:var(--laut-2);margin-bottom:10px}
+.frame{border:1px solid var(--garis);background:var(--putih);border-radius:6px;overflow:hidden}
+.frame iframe{display:block;width:100%;height:100%;border:0}
+.kosong{display:grid;place-items:center;text-align:center;gap:6px;padding:28px;min-height:180px;background:repeating-linear-gradient(135deg,var(--ombak) 0 12px,#f1f7f8 12px 24px);color:var(--redam);font-size:14px}
+.kosong code{background:var(--putih);padding:2px 8px;border-radius:4px;border:1px solid var(--garis);color:var(--laut)}
+.aksi{display:flex;flex-wrap:wrap;gap:10px;margin:0 0 20px}
+.tombol{display:inline-block;padding:11px 18px;border-radius:6px;font-weight:600;font-size:14.5px;text-decoration:none;border:2px solid var(--laut);color:var(--laut);background:transparent}
+.tombol:hover{background:var(--laut);color:#fff}
+.tombol.utama{background:var(--laut);color:#fff}
+.tombol.utama:hover{background:var(--laut-2);border-color:var(--laut-2)}
+.tombol.mati{border-style:dashed;border-color:var(--garis);color:var(--redam);pointer-events:none}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+
+@media (max-width:900px){.grid2{grid-template-columns:1fr}}
+@media (max-width:760px){
+  .side{transform:translateX(-100%);box-shadow:0 0 40px rgba(0,0,0,.35)}
+  body.buka .side{transform:none}
+  body.buka .scrim{display:block;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:30}
+  .burger{display:block}
+  main{margin-left:0;padding-top:68px}
+  .tombol{width:100%;text-align:center}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<button class="burger" id="burger" aria-label="Buka menu" aria-controls="side" aria-expanded="false">&#9776;</button>
+<div class="scrim" id="scrim"></div>
+<nav class="side" id="side" aria-label="Menu utama"></nav>
+<main id="main" tabindex="-1"></main>
+
+<script>
+/* =====================================================================
+   KONFIGURASI: ganti tautan di sini saja. Tidak perlu mengubah kode lain.
+   - tipe "embed"  : ditampilkan di halaman (iframe). Pakai URL embed.
+   - tipe "link"   : tombol yang membuka tab baru.
+   - url kosong ("") : tampil kotak penanda "tautan belum diisi".
+   Form: Google Form > Kirim > ikon <> > salin URL di src (…viewform?embedded=true)
+   Dashboard: Looker Studio > File > Embed report > salin URL embed
+   ===================================================================== */
+const LOOKER = "https://datastudio.google.com/embed/reporting/";
+const CONFIG = {
+  judul: "Portal KUB",
+  sub: "Sistem Informasi",
+  halaman: [
+    /* ---------- Informasi KUB ---------- */
+    {id:"profil", grup:"Informasi KUB", judul:"Profil KUB", desc:"Profil kelompok usaha bersama.",
+     blok:[{tipe:"embed", label:"", url:LOOKER+"ded2cbd7-ee8d-41be-93b4-ded0ec69a3fa/page/p_1zlhqqqy4d", tinggi:520}]},
+    {id:"sejarah", grup:"Informasi KUB", judul:"Sejarah Kelompok", desc:"Sejarah singkat terbentuknya KUB.",
+     blok:[{tipe:"embed", label:"", url:LOOKER+"a6632af8-324f-432a-adac-daee6cebdbfd/page/p_f6zt761w4d", tinggi:520}]},
+    {id:"data-dasar", grup:"Informasi KUB", judul:"Data Dasar", desc:"Profil singkat tiap KUB.",
+     aksi:[{label:"Isi Google Form", url:"https://forms.gle/MknDeeHwXejc3A2r8", utama:true},
+           {label:"Lihat spreadsheet", url:"https://docs.google.com/spreadsheets/d/1Sd6rmhcHZI3HFuyA8gBeKsaJAAY2Yz8oHaR7GtCfu-Q/edit?usp=sharing"}],
+     blok:[{tipe:"embed", label:"", url:LOOKER+"ecf1dbc0-1a3a-4409-a1dd-794b8b9eb5db/page/p_eqhrybmx4d", tinggi:520}]},
+    {id:"keanggotaan", grup:"Informasi KUB", judul:"Data Keanggotaan", desc:"Setiap KUB memiliki anggota dengan struktur jabatan yang berbeda.",
+     aksi:[{label:"Lihat spreadsheet", url:"https://docs.google.com/spreadsheets/d/1TziQtHtFdYtQwhqeeQ2C7VUoVX7r1GEnsL7PIrZTV5s/edit?usp=sharing"}],
+     blok:[{tipe:"embed", label:"", url:LOOKER+"af2ce4b9-fb36-4df8-aa1d-41f80c714cda/page/page_12345", tinggi:520}]},
+    {id:"komoditas", grup:"Informasi KUB", judul:"Data Komoditas Perikanan", desc:"Komoditas unggulan yang dimiliki setiap KUB.",
+     aksi:[{label:"Isi Google Form", url:"https://forms.gle/pUqn1JqXPtkHS7we7", utama:true},
+           {label:"Lihat spreadsheet", url:"https://docs.google.com/spreadsheets/d/1fOcKgK8gsEzh3IcDqKIxZcMrJ6ejrGy7RwpE1SXC0V8/edit?usp=sharing"}],
+     blok:[{tipe:"embed", label:"", url:LOOKER+"dad6ca94-c571-4939-91ad-9ecfa1aa4592/page/page_12345", tinggi:520}]},
+    {id:"pendaftaran", grup:"Informasi KUB", judul:"Pendaftaran Anggota/Komoditas Baru", desc:"Isi formulir, lalu pantau rekapitulasi data di dashboard.",
+     blok:[{tipe:"embed", label:"Formulir pendaftaran", url:"https://docs.google.com/forms/d/e/1FAIpQLSeSO5iLjxMMbJuF1YafBCN6hksZVcthpt8lv53KZPPSMxQGqg/viewform?embedded=true", tinggi:640},
+           {tipe:"embed", label:"Rekapitulasi pendaftaran", url:LOOKER+"af2ce4b9-fb36-4df8-aa1d-41f80c714cda/page/page_12345", tinggi:480}]},
+    {id:"penilaian", grup:"Informasi KUB", judul:"Penilaian Kinerja/Komoditas", desc:"Berikan penilaian kinerja kelompok, lalu lihat hasilnya.",
+     blok:[{tipe:"embed", label:"Formulir penilaian", url:"https://docs.google.com/forms/d/e/1FAIpQLSeTc0uxdMRr9oBYuRffdvVxuG2fWF9GN7Eih52thTk5V0Cmxw/viewform?embedded=true", tinggi:640},
+           {tipe:"embed", kolom:true, label:"Tabel penilaian", url:"https://docs.google.com/spreadsheets/d/e/2PACX-1vQ5mb3AXk1-E9H7NY6GILD6jDTtiGwBfuS2_D9DkPQB0FIDCNH_7VhBby_uCu0GOaU8rKjAlskUbqXA/pubhtml?widget=true&headers=false", tinggi:450},
+           {tipe:"embed", kolom:true, label:"Grafik penilaian", url:LOOKER+"831c9559-a863-45ab-963f-a948777d0836/page/page_12345", tinggi:450}]},
+
+    /* ---------- Administrasi kelompok: isi url form + dashboard ---------- */
+    ...[
+      ["agenda","Tamu Kelompok / Agenda Surat","Catat tamu, surat masuk, dan agenda kegiatan kelompok."],
+      ["kas","Kas Kelompok","Pemasukan, pengeluaran, dan saldo kas kelompok."],
+      ["produksi","Produksi / Hasil Tangkapan","Hasil tangkapan dan produksi per periode."],
+      ["notulen","Notulen Rapat","Hasil rapat dan keputusan kelompok."],
+      ["rencana-kegiatan","Rencana Kegiatan","Agenda kegiatan kelompok ke depan."],
+      ["rub","Rencana Usaha Bersama","Perencanaan usaha bersama antar-kelompok."],
+      ["ruk","Rencana Usaha Kelompok","Perencanaan usaha satu kelompok."],
+      ["inventaris","Inventaris Barang","Perlengkapan, aset, dan barang milik kelompok."],
+      ["iuran","Iuran Kelompok","Iuran anggota dan status pembayaran."],
+      ["simpanan","Simpan Pinjam","Simpanan, pinjaman, dan pelunasan anggota."],
+      ["aktivitas","Aktivitas Kelompok","Aktivitas harian, mingguan, dan bulanan kelompok."]
+    ].map(([id,judul,desc]) => ({
+      id, grup:"Administrasi kelompok", judul, desc,
+      blok:[{tipe:"embed", label:"Formulir pengisian", url:"", tinggi:640},   // tempel URL embed Google Form
+            {tipe:"embed", label:"Rekap data", url:"", tinggi:480}]            // tempel URL embed Looker Studio
+    }))
+  ]
+};
+
+/* ============================ KODE ============================ */
+const $ = s => document.querySelector(s);
+const side = $("#side"), main = $("#main");
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function buildMenu(){
+  let html = `<div class="brand"><b>KUB</b><span>${esc(CONFIG.judul)}<small>${esc(CONFIG.sub)}</small></span></div>`, g = "";
+  CONFIG.halaman.forEach(h => {
+    if(h.grup !== g){ g = h.grup; html += `<h2>${esc(g)}</h2>`; }
+    html += `<a href="#${h.id}" data-id="${h.id}">${esc(h.judul)}</a>`;
+  });
+  side.innerHTML = html;
+}
+
+function frame(b){
+  const lbl = b.label ? `<h3>${esc(b.label)}</h3>` : "";
+  if(!b.url) return `<div class="blok">${lbl}<div class="frame kosong"><strong>Tautan belum diisi</strong><span>Tempel URL embed di <code>CONFIG</code> pada file index.html.</span></div></div>`;
+  return `<div class="blok">${lbl}<div class="frame" style="height:${b.tinggi||480}px"><iframe src="${esc(b.url)}" title="${esc(b.label||"Konten")}" loading="lazy" allowfullscreen></iframe></div></div>`;
+}
+
+function render(id){
+  const h = CONFIG.halaman.find(x => x.id === id) || CONFIG.halaman[0];
+  document.title = h.judul + " | " + CONFIG.judul;
+  side.querySelectorAll("a").forEach(a => {
+    if(a.dataset.id === h.id) a.setAttribute("aria-current","page"); else a.removeAttribute("aria-current");
+  });
+  let html = `<header class="head"><h1>${esc(h.judul)}</h1><p>${esc(h.desc)}</p></header>`;
+  if(h.aksi) html += `<div class="aksi">` + h.aksi.map(a =>
+    a.url ? `<a class="tombol${a.utama?" utama":""}" href="${esc(a.url)}" target="_blank" rel="noopener noreferrer">${esc(a.label)}</a>`
+          : `<span class="tombol mati">${esc(a.label)}</span>`).join("") + `</div>`;
+  // blok berurutan; blok bertanda kolom:true yang berdampingan dijadikan dua kolom
+  let i = 0;
+  while(i < h.blok.length){
+    if(h.blok[i].kolom && h.blok[i+1] && h.blok[i+1].kolom){ html += `<div class="grid2">${frame(h.blok[i])}${frame(h.blok[i+1])}</div>`; i += 2; }
+    else { html += frame(h.blok[i]); i++; }
+  }
+  main.innerHTML = html;
+  window.scrollTo(0,0);
+  closeMenu();
+}
+
+function route(){ render(location.hash.slice(1) || CONFIG.halaman[0].id); }
+function closeMenu(){ document.body.classList.remove("buka"); $("#burger").setAttribute("aria-expanded","false"); }
+$("#burger").addEventListener("click", () => {
+  const open = document.body.classList.toggle("buka");
+  $("#burger").setAttribute("aria-expanded", open);
+});
+$("#scrim").addEventListener("click", closeMenu);
+window.addEventListener("hashchange", route);
+buildMenu(); route();
+</script>
+</body>
+</html>
